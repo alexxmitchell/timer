@@ -18,16 +18,33 @@ package com.example.androiddevchallenge
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.example.androiddevchallenge.ui.theme.MyTheme
 
 class MainActivity : AppCompatActivity() {
+
+    @ExperimentalAnimationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             MyTheme {
                 MyApp()
@@ -36,26 +53,71 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-// Start building your app here!
+@ExperimentalAnimationApi
 @Composable
 fun MyApp() {
+    val viewModel = MainViewModel()
+    val time by viewModel.time.observeAsState()
+
+    var timerStarted by remember { mutableStateOf(false) }
     Surface(color = MaterialTheme.colors.background) {
-        Text(text = "Ready... Set... GO!")
+
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.padding(bottom = 20.dp)
+            ) {
+                AnimatedVisibility(!timerStarted) {
+                    Button(
+                        onClick = {
+                            timerStarted = true
+                            viewModel.timer.start()
+                        }
+                    ) {
+                        Text(text = "Start")
+                    }
+                }
+                AnimatedVisibility(timerStarted) {
+                    Button(
+                        onClick = {
+                            timerStarted = false
+                            viewModel.onPause()
+                        }
+                    ) {
+                        Text(text = "Stop")
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        viewModel.resetTimer()
+                        timerStarted = false
+                    },
+                    enabled = timerStarted
+                ) {
+                    Text(text = "Reset")
+                }
+            }
+            Text(text = "Time remaining: $time seconds")
+            Text(text = "$time")
+        }
     }
 }
 
-@Preview("Light Theme", widthDp = 360, heightDp = 640)
-@Composable
-fun LightPreview() {
-    MyTheme {
-        MyApp()
-    }
-}
-
-@Preview("Dark Theme", widthDp = 360, heightDp = 640)
-@Composable
-fun DarkPreview() {
-    MyTheme(darkTheme = true) {
-        MyApp()
-    }
-}
+// @Preview("Light Theme", widthDp = 360, heightDp = 640)
+// @Composable
+// fun LightPreview() {
+//    MyTheme {
+//        MyApp()
+//    }
+// }
+//
+// @Preview("Dark Theme", widthDp = 360, heightDp = 640)
+// @Composable
+// fun DarkPreview() {
+//    MyTheme(darkTheme = true) {
+//        MyApp()
+//    }
+// }
