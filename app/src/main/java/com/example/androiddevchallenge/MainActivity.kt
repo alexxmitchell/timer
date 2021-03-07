@@ -126,7 +126,8 @@ fun MyApp() {
                 AnimatedVisibility(
                     visible = !timerRunning,
                     enter = slideInVertically(
-                        initialOffsetY = { -40 })
+                        initialOffsetY = { -40 }
+                    )
                 ) {
                     Text(
                         text = "Time's up!",
@@ -145,26 +146,26 @@ fun AnimatedTimer(elapsedTime: Int, durationTime: Boolean) {
         targetValue = if (elapsedTime != null) {
             (360 * (elapsedTime.div(10)).toFloat())
         } else {
-               0f
+            0f
         },
-        //if reset, reload in 1000 seconds
+        // if reset, reload in 1000 seconds
         animationSpec = tween(
-                durationMillis = if (durationTime) elapsedTime?.times(1000) else 1000,
-                easing = LinearEasing
-            )
+            durationMillis = if (durationTime) elapsedTime?.times(1000) else 1000,
+            easing = LinearEasing
+        )
     )
     Canvas(
         modifier = Modifier.size(300.dp),
         onDraw = {
 
-                drawArc(
-                    color = Color.DarkGray,
-                    startAngle = -90f,
-                    sweepAngle = elapsed,
-                    useCenter = true,
-                    size = Size(600f, 600f),
-                    topLeft = Offset(235f, 50f)
-                )
+            drawArc(
+                color = Color.DarkGray,
+                startAngle = -90f,
+                sweepAngle = elapsed,
+                useCenter = true,
+                size = Size(600f, 600f),
+                topLeft = Offset(235f, 50f)
+            )
         }
     )
 }

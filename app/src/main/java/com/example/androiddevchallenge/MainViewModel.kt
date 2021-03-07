@@ -39,11 +39,8 @@ class MainViewModel : ViewModel() {
         }
     }
 
-
     fun resetTimer() {
         timer.cancel()
         _time.value = 10
     }
-
-
 }
