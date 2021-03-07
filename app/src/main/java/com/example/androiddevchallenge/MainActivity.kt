@@ -23,11 +23,11 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -70,104 +70,101 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun MyApp() {
     val viewModel = MainViewModel()
-    val time by viewModel.time.observeAsState()
+    val time by viewModel.time.observeAsState(initial = 10)
+    var timerRunning by remember { mutableStateOf(false) }
+    var durationTime by remember { mutableStateOf(true) }
 
-    var timerStarted by remember { mutableStateOf(false) }
     Surface(color = MaterialTheme.colors.background) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 50.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceAround
-
         ) {
+            Text(text = "10 Second Timer", fontSize = 40.sp)
             Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.padding(bottom = 20.dp)
             ) {
-                AnimatedVisibility(!timerStarted) {
+                AnimatedVisibility(!timerRunning) {
                     Button(
                         onClick = {
-                            timerStarted = true
+                            timerRunning = true
+                            durationTime = true
                             viewModel.timer.start()
                         },
-                        modifier = Modifier.width(180.dp).padding(14.dp)
+                        modifier = Modifier
+                            .width(180.dp)
+                            .padding(14.dp)
                     ) {
                         Text(text = "Start")
                     }
                 }
-                AnimatedVisibility(timerStarted && time != 0) {
+
+                AnimatedVisibility(timerRunning) {
                     Button(
                         onClick = {
-                            timerStarted = false
-                            viewModel.onPause()
+                            viewModel.resetTimer()
+                            timerRunning = false
+                            durationTime = false
                         },
-                        modifier = Modifier.width(180.dp).padding(14.dp)
+                        enabled = timerRunning,
+                        modifier = Modifier
+                            .width(180.dp)
+                            .padding(14.dp)
                     ) {
-                        Text(text = "Stop")
+                        Text(text = "Reset")
                     }
                 }
-                Spacer(modifier = Modifier.padding(end = 20.dp))
-
-                Button(
-                    onClick = {
-                        viewModel.resetTimer()
-                        timerStarted = false
-                    },
-                    enabled = timerStarted,
-                    modifier = Modifier.width(180.dp).padding(14.dp)
-                ) {
-                    Text(text = "Reset")
-                }
             }
+
             if (time != 0) {
-                Clock(elapsedTime = time)
+                time?.let { AnimatedTimer(elapsedTime = it, durationTime) }
                 Text(text = "Time remaining: $time seconds")
             } else {
-                timerStarted = false
-                Text(
-                    text = "Time's up!",
-                    fontSize = 30.sp
-                )
+                timerRunning = false
+                AnimatedVisibility(
+                    visible = !timerRunning,
+                    enter = slideInVertically(
+                        initialOffsetY = { -40 })
+                ) {
+                    Text(
+                        text = "Time's up!",
+                        fontSize = 30.sp
+                    )
+                }
             }
         }
     }
 }
-@Preview
-@Composable
-fun previewClock() {
-    Clock(elapsedTime = 15)
-}
 
 @Composable
-fun Clock(elapsedTime: Int?) {
+fun AnimatedTimer(elapsedTime: Int, durationTime: Boolean) {
 
     val elapsed: Float by animateFloatAsState(
         targetValue = if (elapsedTime != null) {
             (360 * (elapsedTime.div(10)).toFloat())
         } else {
-            0f
+               0f
         },
+        //if reset, reload in 1000 seconds
         animationSpec = tween(
-            durationMillis = 10000,
-            easing = LinearEasing
-        )
+                durationMillis = if (durationTime) elapsedTime?.times(1000) else 1000,
+                easing = LinearEasing
+            )
     )
     Canvas(
         modifier = Modifier.size(300.dp),
         onDraw = {
-            if (elapsedTime != null) {
+
                 drawArc(
                     color = Color.DarkGray,
                     startAngle = -90f,
                     sweepAngle = elapsed,
                     useCenter = true,
                     size = Size(600f, 600f),
-                    topLeft = Offset(225f, 50f)
+                    topLeft = Offset(235f, 50f)
                 )
-            }
         }
     )
 }
@@ -180,11 +177,3 @@ fun LightPreview() {
         MyApp()
     }
 }
-//
-// @Preview("Dark Theme", widthDp = 360, heightDp = 640)
-// @Composable
-// fun DarkPreview() {
-//    MyTheme(darkTheme = true) {
-//        MyApp()
-//    }
-// }
