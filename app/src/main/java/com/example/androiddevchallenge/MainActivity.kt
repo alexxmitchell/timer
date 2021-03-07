@@ -20,11 +20,18 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -35,8 +42,14 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.androiddevchallenge.ui.theme.MyTheme
 
 class MainActivity : AppCompatActivity() {
@@ -63,10 +76,15 @@ fun MyApp() {
     Surface(color = MaterialTheme.colors.background) {
 
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 50.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceAround
+
         ) {
             Row(
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.padding(bottom = 20.dp)
             ) {
                 AnimatedVisibility(!timerStarted) {
@@ -74,45 +92,94 @@ fun MyApp() {
                         onClick = {
                             timerStarted = true
                             viewModel.timer.start()
-                        }
+                        },
+                        modifier = Modifier.width(180.dp).padding(14.dp)
                     ) {
                         Text(text = "Start")
                     }
                 }
-                AnimatedVisibility(timerStarted) {
+                AnimatedVisibility(timerStarted && time != 0) {
                     Button(
                         onClick = {
                             timerStarted = false
                             viewModel.onPause()
-                        }
+                        },
+                        modifier = Modifier.width(180.dp).padding(14.dp)
                     ) {
                         Text(text = "Stop")
                     }
                 }
+                Spacer(modifier = Modifier.padding(end = 20.dp))
 
                 Button(
                     onClick = {
                         viewModel.resetTimer()
                         timerStarted = false
                     },
-                    enabled = timerStarted
+                    enabled = timerStarted,
+                    modifier = Modifier.width(180.dp).padding(14.dp)
                 ) {
                     Text(text = "Reset")
                 }
             }
-            Text(text = "Time remaining: $time seconds")
-            Text(text = "$time")
+            if (time != 0) {
+                Clock(elapsedTime = time)
+                Text(text = "Time remaining: $time seconds")
+            } else {
+                timerStarted = false
+                Text(
+                    text = "Time's up!",
+                    fontSize = 30.sp
+                )
+            }
         }
     }
 }
+@Preview
+@Composable
+fun previewClock() {
+    Clock(elapsedTime = 15)
+}
 
-// @Preview("Light Theme", widthDp = 360, heightDp = 640)
-// @Composable
-// fun LightPreview() {
-//    MyTheme {
-//        MyApp()
-//    }
-// }
+@Composable
+fun Clock(elapsedTime: Int?) {
+
+    val elapsed: Float by animateFloatAsState(
+        targetValue = if (elapsedTime != null) {
+            (360 * (elapsedTime.div(10)).toFloat())
+        } else {
+            0f
+        },
+        animationSpec = tween(
+            durationMillis = 10000,
+            easing = LinearEasing
+        )
+    )
+    Canvas(
+        modifier = Modifier.size(300.dp),
+        onDraw = {
+            if (elapsedTime != null) {
+                drawArc(
+                    color = Color.DarkGray,
+                    startAngle = -90f,
+                    sweepAngle = elapsed,
+                    useCenter = true,
+                    size = Size(600f, 600f),
+                    topLeft = Offset(225f, 50f)
+                )
+            }
+        }
+    )
+}
+
+@ExperimentalAnimationApi
+@Preview("Light Theme", widthDp = 360, heightDp = 640)
+@Composable
+fun LightPreview() {
+    MyTheme {
+        MyApp()
+    }
+}
 //
 // @Preview("Dark Theme", widthDp = 360, heightDp = 640)
 // @Composable
